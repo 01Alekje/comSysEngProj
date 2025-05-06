@@ -29,7 +29,12 @@ eliminate:
 		
 		##
 		## Implement eliminate here
+		lbu $s0, 0	# k = 0
+k_loop: 
+		
 		## 
+		
+		
 
 		lw	$ra, 0($sp)			# done restoring registers
 		addiu	$sp, $sp, 4			# remove stack frame
@@ -56,17 +61,17 @@ getelem:
 		sw	$s0, 0($sp)		# done saving registers
 		
 		sll	$s2, $a1, 2		# s2 = 4*N (number of bytes per row)
-		multu	$a2, $s2		# result will be 32-bit unless the matrix is huge
-		mflo	$s1				# s1 = a*s2
+		multu	$a2, $s2		# result will be 32-bit unless the matrix is huge, (will be index of wanted element)
+		mflo	$s1				# s1 = a*s2 (but actually s1 = a2*s2)
 		addu	$s1, $s1, $a0		# Now s1 contains address to row a
 		sll	$s0, $a3, 2			# s0 = 4*b (byte offset of column b)
-		addu	$v0, $s1, $s0		# Now we have address to A[a][b] in v0...
+		addu	$v0, $s1, $s0		# Now we have address to A[a][b] in v0... (v0 = row address + offset to column)
 		l.s	$f0, 0($v0)		    # ... and contents of A[a][b] in f0.
-		
-		lw	$s2, 8($sp)
-		lw	$s1, 4($sp)
-		lw	$s0, 0($sp)		# done restoring registers
-		addiu	$sp, $sp, 12		# remove stack frame
+						    # ... l.s tells coprocessor 1 to load with single precision 32bit)
+		lw	$s2, 8($sp)		# Load old s2
+		lw	$s1, 4($sp)		# Load old s1
+		lw	$s0, 0($sp)		# Load old s0, done restoring registers
+		addiu	$sp, $sp, 12		# remove stack frame (i.e. go back 4 words)
 		
 		jr	$ra			# return from subroutine
 		nop				# this is the delay slot associated with all types of jumps
