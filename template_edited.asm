@@ -29,9 +29,45 @@ eliminate:
 		
 		##
 		## Implement eliminate here
-		lbu $s0, 0	# k = 0
+		li $s0, 0 # 0 = k = 0
 k_loop: 
+		add $s1, $s0, $zero # s1 = j = k
+j_loop:		
+		move $a2, $s0 # prep argument k
+		move $a3, $s1 # prep argument j
+		jal getelem # returns address in v0, value in f0
+		nop
+				
+		mov.s $f2, $f0 # save value of A[k][j]
+		move $t3, $v0 # move address from v0 to t3
 		
+		move $a3, $s0 # set arg2 to k (both are now k)
+		jal getelem # returns 
+		nop
+		
+		div.s $f4, $f2, $f0 # low = A[k][j] / A[k][k]
+		
+		s.s $f4, 0($t3) # store new value in $t3
+		
+		addi $s1, $s1, 1 # incremement j
+		nop
+		ble $s1, $a1, j_loop # end of j_loop
+		nop
+		nop
+		
+		addi $s4, $s0, 1 # prep j = k + 1
+		
+i_loop:		
+
+		ble $s4, $a1, i_loop # end of i_loop
+		nop
+		nop
+		
+		addi $s0, $s0, 1 # increment k
+		nop
+		ble $s0, $a1, k_loop # end of k_loop
+		nop
+		nop
 		## 
 		
 		
