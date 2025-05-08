@@ -1,8 +1,8 @@
 ### Text segment
 		.text
 start:
-		la	$a0, matrix_4x4		# a0 = A (base address of matrix)
-		li	$a1, 4    		    # a1 = N (number of elements per row)
+		la	$a0, matrix_24x24		# a0 = A (base address of matrix)
+		li	$a1, 24	   		        # a1 = N (number of elements per row)
 									# <debug>
 		jal 	print_matrix	    # print matrix before elimination
 		nop							# </debug>
@@ -234,6 +234,18 @@ spaces:
 		.asciiz "   "   		# spaces to insert between numbers
 newline:
 		.asciiz "\n"  			# newline
+		
+matrix_3x3:	
+    		.float 2.0,  1.0,  1.0
+    		.float 4.0,  1.0,  0.0
+    		.float -2.0, 2.0,  1.0
+    		
+matrix_5x5:	
+    		.float  4.0,  1.0,  2.0, -3.0,  5.0
+    		.float  2.0,  3.0,  1.0,  4.0, -1.0
+    		.float  1.0, -2.0,  5.0,  1.0,  3.0
+    		.float  3.0,  1.0, -1.0,  2.0,  4.0
+    		.float -1.0,  2.0,  3.0, -4.0,  1.0
 
 ## Input matrix: (4x4) ##
 matrix_4x4:	
