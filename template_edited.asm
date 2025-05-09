@@ -32,8 +32,25 @@ eliminate:
 		li $s0, 0 # 0 = k = 0
 k_loop: 
 		addi $s1, $s0, 1 # s1 = j = k + 1
-j_loop:		
+		
+		#get address for A[k]
+		#sll $t0, $a1, 2
+		#multu $s0, $t0
+		#mflo $t0 # t0 has address for A[k]
+		
+		#get A[k][k]
+		#sll $t1, $s0, 2
+		#addu $t1, $t1, $t0
+		#lw $t1, $t1 # t1 cointains value of A[k][k]
+		
+		# get A[k][k]
 		move $a2, $s0 # prep argument k
+		move $a3, $s0 # prep argument k
+		jal getelem
+		nop
+		mov.s $f5, $f0 # A[k][k] value is stored in s6
+		move $s7, $v0 # A[k][k] address is store in s6
+j_loop:		
 		move $a3, $s1 # prep argument j
 		jal getelem # returns address in v0, value in f0
 		nop
@@ -41,14 +58,9 @@ j_loop:
 		mov.s $f2, $f0 # save value of A[k][j]
 		move $t3, $v0 # move address from v0 to t3
 		
-		move $a3, $s0 # set arg2 to k (both are now k)
-		jal getelem # returns 
-		nop
-		nop # edited from here
-		
 		# Hera lies the old pivot = 1.0, now moved further down for correctness. 
 		
-		div.s $f4, $f2, $f0 # low = A[k][j] / A[k][k] sussy baka!!!!!!!!!!!!!!!!
+		div.s $f4, $f2, $f5 # low = A[k][j] / A[k][k]
 		s.s $f4, 0($t3) # store new value in $t3
 		
 		addi $s1, $s1, 1 # incremement j
@@ -60,14 +72,25 @@ j_loop:
     		jal getelem
    		nop
    		
+   		# store 1.0 in A[k][k]
     		lui $t7, 0x3F80           # 1.0
     		mtc1 $t7, $f6
-    		s.s $f6, 0($v0)           # Value of A[k][k] set to 1.0
+    		s.s $f6, 0($s7)           # Value of A[k][k] set to 1.0
 		
 		addi $s2, $s0, 1 # prep i = k + 1
 		
 i_loop:		
 		addi $s5, $s0, 1 # inner j = k + 1 what is this
+		
+		# get A[i][k]
+		move $a2, $s2
+		move $a3, $s0
+		jal getelem
+		nop
+		
+		move $t5, $v0 # move address from v0 to t0
+		mov.s $f7, $f0 # value of A[i][k] into f7
+		
 inner_i_loop: 
 		# beginning of inner 
 		
@@ -80,14 +103,6 @@ inner_i_loop:
 		move $t0, $v0 # move address from v0 to t0
 		mov.s $f2, $f0 # save value of A[i][j] to f2
 		
-		# prep arguments for getelem A[i][k]
-		move $a2, $s2
-		move $a3, $s0
-		jal getelem
-		nop
-		
-		mov.s $f3, $f0 # save value of A[i][k] to f3
-		
 		# prep arguments for getelem A[k][j] to f4
 		move $a2, $s0
 		move $a3, $s5
@@ -96,7 +111,7 @@ inner_i_loop:
 		
 		mov.s $f4, $f0 # save value of A[k][j] to f4
 		
-		mul.s $f3, $f3, $f4
+		mul.s $f3, $f7, $f4
 		sub.s $f2, $f2, $f3
 		s.s $f2, 0($t0)
 		
@@ -105,15 +120,8 @@ inner_i_loop:
 		
 		blt $s5, $a1, inner_i_loop # end of inner 
 		nop
-		nop
-
-		move $a2, $s2
-		move $a3, $s0
-		jal getelem
-		nop
 		
-		move $t0, $v0 # move address from v0 to t0
-		sw $zero, 0($t0) # store 0.0
+		sw $zero, 0($t5) # store 0.0
 		
 		addi $s2, $s2, 1
 		nop
@@ -130,7 +138,6 @@ inner_i_loop:
 		## 
 		
 		
-
 		lw	$ra, 0($sp)			# done restoring registers
 		addiu	$sp, $sp, 4			# remove stack frame
 
@@ -138,7 +145,7 @@ inner_i_loop:
 		nop					# this is the delay slot associated with all types of jumps
 
 ################################################################################
-# getelem - Get address and content of matrix element A[a][b].
+# getelem - Get address and content of matrix element A[a][b]. (Trash method)
 #
 # Argument registers $a0..$a3 are preserved across calls
 #
