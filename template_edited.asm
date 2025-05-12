@@ -34,53 +34,52 @@ k_loop:
 		addi $s1, $s0, 1 # s1 = j = k + 1
 		
 		#get address for A[k]
-		#sll $t0, $a1, 2
-		#multu $s0, $t0
-		#mflo $t0 # t0 has address for A[k]
+		sll $t0, $a1, 2
+		multu $s0, $t0
+		mflo $t0 # t0 has address for A[k]
+		addu $t0, $t0, $a0
 		
 		#get A[k][k]
-		#sll $t1, $s0, 2
-		#addu $t1, $t1, $t0
-		#lw $t1, $t1 # t1 cointains value of A[k][k]
+		sll $t1, $s0, 2
+		addu $t1, $t1, $t0 # address of A[k][k] on t1
+		lwc1 $f10, 0($t1) # f10 cointains value of A[k][k]
 		
 		# get A[k][k]
-		move $a2, $s0 # prep argument k
-		move $a3, $s0 # prep argument k
-		jal getelem
-		nop
-		mov.s $f5, $f0 # A[k][k] value is stored in s6
-		move $s7, $v0 # A[k][k] address is store in s6
+		#move $a2, $s0 # prep argument k
+		#move $a3, $s0 # prep argument k
+		#jal getelem
+		#nop
+		#mov.s $f5, $f0 # A[k][k] value is stored in f5
+		#move $s7, $v0 # A[k][k] address is store in s7
 j_loop:		
-		move $a3, $s1 # prep argument j
-		jal getelem # returns address in v0, value in f0
-		nop
+		#move $a3, $s1 # prep argument j
+		#jal getelem # returns address in v0, value in f0
+		#nop
 				
-		mov.s $f2, $f0 # save value of A[k][j]
-		move $t3, $v0 # move address from v0 to t3
+		#mov.s $f2, $f0 # save value of A[k][j]
+		#move $t3, $v0 # move address from v0 to t3
 		
-		# Hera lies the old pivot = 1.0, now moved further down for correctness. 
+		sll $t2, $s1, 2
+		addu $t2, $t2, $t0 #address of A[k][j] on t2
+		lwc1 $f11, 0($t2) # f11 cointains value of A[k][j]
 		
-		div.s $f4, $f2, $f5 # low = A[k][j] / A[k][k]
-		s.s $f4, 0($t3) # store new value in $t3
+		# move values to f registers, i.e. t2, t4
+		div.s $f4, $f11, $f10 # low = A[k][j] / A[k][k]
+		s.s $f4, 0($t2) # store new value in $t2
 		
 		addi $s1, $s1, 1 # incremement j
 		nop
 		blt $s1, $a1, j_loop # end of j_loop
 		nop
-		
-		# Set pivot to 1.0
-    		jal getelem
-   		nop
    		
    		# store 1.0 in A[k][k]
     		lui $t7, 0x3F80           # 1.0
     		mtc1 $t7, $f6
-    		s.s $f6, 0($s7)           # Value of A[k][k] set to 1.0
+    		s.s $f6, 0($t1)           # Value of A[k][k] set to 1.0
 		
 		addi $s2, $s0, 1 # prep i = k + 1
 		
-i_loop:		
-		addi $s5, $s0, 1 # inner j = k + 1 what is this
+i_loop:		addi $s5, $s0, 1 # inner j = k + 1 what is this
 		
 		# get A[i][k]
 		move $a2, $s2
@@ -88,14 +87,10 @@ i_loop:
 		jal getelem
 		nop
 		
-		move $t5, $v0 # move address from v0 to t0
+		move $t5, $v0 # move address from v0 to t5
 		mov.s $f7, $f0 # value of A[i][k] into f7
 		
-inner_i_loop: 
-		# beginning of inner 
-		
-		# prep arguments for getelem A[i][j]
-		move $a2, $s2
+inner_i_loop: 	move $a2, $s2 # prep arguments for getelem A[i][j]
 		move $a3, $s5
 		jal getelem
 		nop
@@ -103,7 +98,7 @@ inner_i_loop:
 		move $t0, $v0 # move address from v0 to t0
 		mov.s $f2, $f0 # save value of A[i][j] to f2
 		
-		# prep arguments for getelem A[k][j] to f4
+		# prep arguments for getelem A[k][j] to f4 # can be optimized
 		move $a2, $s0
 		move $a3, $s5
 		jal getelem

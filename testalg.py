@@ -5,23 +5,15 @@ def eliminate(A):
         # Normalize pivot row elements to the right of the pivot
         pivot = A[k][k]
         for j in range(k + 1, N):
-            A[k][j] = A[k][j] / pivot
-
-            factor = A[j][k]
-            for f in range(k + 1, N):
-                A[j][f] -= factor * A[k][f]
-            
-
-            #A[k+1][j] -= A[k+1][k] * A[k][j]
+            A[k][j] = A[k][j] / pivot    
         # Set pivot element to 1.0
         A[k][k] = 1.0
         # Eliminate entries below the pivot
         for i in range(k + 1, N):
+            factor = A[i][k]
+            for j in range(k + 1, N):
+                A[i][j] -= factor * A[k][j]
             A[i][k] = 0.0
-            #factor = A[i][k]
-            #for j in range(k + 1, N):
-            #    A[i][j] -= factor * A[k][j]
-            #A[i][k] = 0.0
             # Zero out the lower element
 
 # Example 4x4 matrix from assembly
