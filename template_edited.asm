@@ -50,8 +50,11 @@ k_loop:
 
 		div.s $f20, $f6, $f10 # f20 has inverse of A[k][k]
 		
-j_loop: 	sub 
+j_loop: 	sub $t8, $a1, $s1 # t8 = N - j
+		addi $s6, $zero, 5
+		ble $t8, $s6, one_iteration # if j+3 < N: unroll
 
+		# to do one iteration
 		sll $t2, $s1, 2 # does this 4 times
 		addu $t2, $t2, $t0 # address of A[k][j] on t2
 		lwc1 $f11, 0($t2) # f11 cointains value of A[k][j]
@@ -60,7 +63,60 @@ j_loop: 	sub
 		s.s $f4, 0($t2) # store new value in $t2
 		
 		addi $s1, $s1, 1 # incremement j
-		nop
+		#nop
+		
+		sll $t2, $s1, 2 # does this 4 times
+		addu $t2, $t2, $t0 # address of A[k][j] on t2
+		lwc1 $f11, 0($t2) # f11 cointains value of A[k][j]
+
+		mul.s $f4, $f20, $f11
+		s.s $f4, 0($t2) # store new value in $t2
+		
+		addi $s1, $s1, 1 # incremement j
+		#nop
+		
+		sll $t2, $s1, 2 # does this 4 times
+		addu $t2, $t2, $t0 # address of A[k][j] on t2
+		lwc1 $f11, 0($t2) # f11 cointains value of A[k][j]
+
+		mul.s $f4, $f20, $f11
+		s.s $f4, 0($t2) # store new value in $t2
+		
+		addi $s1, $s1, 1 # incremement j
+		#nop
+		
+		sll $t2, $s1, 2 # does this 4 times
+		addu $t2, $t2, $t0 # address of A[k][j] on t2
+		lwc1 $f11, 0($t2) # f11 cointains value of A[k][j]
+
+		mul.s $f4, $f20, $f11
+		s.s $f4, 0($t2) # store new value in $t2
+		
+		addi $s1, $s1, 1 # incremement j
+		#nop
+		
+		sll $t2, $s1, 2 # does this 4 times
+		addu $t2, $t2, $t0 # address of A[k][j] on t2
+		lwc1 $f11, 0($t2) # f11 cointains value of A[k][j]
+
+		mul.s $f4, $f20, $f11
+		s.s $f4, 0($t2) # store new value in $t2
+		
+		addi $s1, $s1, 1 # incremement j
+		#nop
+		
+		
+one_iteration:  sll $t2, $s1, 2 # does this 4 times
+		addu $t2, $t2, $t0 # address of A[k][j] on t2
+		lwc1 $f11, 0($t2) # f11 cointains value of A[k][j]
+
+		mul.s $f4, $f20, $f11
+		s.s $f4, 0($t2) # store new value in $t2
+		
+		addi $s1, $s1, 1 # incremement j
+		#nop
+		
+		# end of unroll
 
 		blt $s1, $a1, j_loop # end of j_loop
 		nop
@@ -83,8 +139,44 @@ i_loop:		addi $s5, $s0, 1 # inner j = k + 1 what is this
 		addu $t4, $t4, $t3 # address of A[i][k] on t4
 		lwc1 $f7, 0($t4) # f7 cointains value of A[i][k]
 		
-inner_i_loop: 	#get A[i][j]
+inner_i_loop: 	sub $t8, $a1, $s5 # t8 = N - j
+		addi $s6, $zero, 2
+		ble $t8, $s6, one_i_iter # if j+3 < N: unroll
+		
 		sll $t5, $s5, 2
+		addu $t5, $t5, $t3 # address of A[i][j] on t4
+		lwc1 $f2, ($t5) # f7 cointains value of A[i][j]
+		
+		#get A[k][j]
+		sll $t6, $s5, 2
+		addu $t6, $t6, $t0 # address of A[k][j] on t6
+		lwc1 $f4, 0($t6) # f4 cointains value of A[k][j]
+		
+		mul.s $f3, $f7, $f4
+		sub.s $f2, $f2, $f3
+		s.s $f2, 0($t5)
+		
+		addi $s5, $s5, 1
+		nop
+		
+		sll $t5, $s5, 2
+		addu $t5, $t5, $t3 # address of A[i][j] on t4
+		lwc1 $f2, ($t5) # f7 cointains value of A[i][j]
+		
+		#get A[k][j]
+		sll $t6, $s5, 2
+		addu $t6, $t6, $t0 # address of A[k][j] on t6
+		lwc1 $f4, 0($t6) # f4 cointains value of A[k][j]
+		
+		mul.s $f3, $f7, $f4
+		sub.s $f2, $f2, $f3
+		s.s $f2, 0($t5)
+		
+		addi $s5, $s5, 1
+		nop
+		
+		#get A[i][j]
+one_i_iter:	sll $t5, $s5, 2
 		addu $t5, $t5, $t3 # address of A[i][j] on t4
 		lwc1 $f2, 0($t5) # f7 cointains value of A[i][j]
 		
