@@ -1,20 +1,21 @@
 def eliminate(A):
     N = len(A)
-    # Loop over each pivot element
+
     for k in range(N):
-        # Normalize pivot row elements to the right of the pivot
         pivot = A[k][k]
+
+        # Normalisera pivotraden och eliminera samtidigt
         for j in range(k + 1, N):
-            A[k][j] = A[k][j] / pivot    
-        # Set pivot element to 1.0
+            A[k][j] = A[k][j] / pivot  # normalisera pivotraden
+
+            for i in range(k + 1, N):
+                A[i][j] = A[i][j] - A[i][k] * A[k][j]
+
         A[k][k] = 1.0
-        # Eliminate entries below the pivot
+
+        # Nollställ kolumn under pivot
         for i in range(k + 1, N):
-            factor = A[i][k]
-            for j in range(k + 1, N):
-                A[i][j] -= factor * A[k][j]
             A[i][k] = 0.0
-            # Zero out the lower element
 
 # Example 4x4 matrix from assembly
 matrix_4x4 = [

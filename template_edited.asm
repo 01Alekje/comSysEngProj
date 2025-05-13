@@ -4,12 +4,12 @@ start:
 		la	$a0, matrix_24x24		# a0 = A (base address of matrix)
 		li	$a1, 24	   		        # a1 = N (number of elements per row)
 									# <debug>
-		jal 	print_matrix	    # print matrix before elimination
-		nop							# </debug>
+		#jal 	print_matrix	    # print matrix before elimination
+		#nop							# </debug>
 		jal 	eliminate			# triangularize matrix!
 		nop							# <debug>
-		jal 	print_matrix		# print matrix after elimination
-		nop							# </debug>
+		#jal 	print_matrix		# print matrix after elimination
+		#nop							# </debug>
 		jal 	exit
 
 exit:
@@ -26,109 +26,93 @@ eliminate:
 		# If necessary, create stack frame, and save return address from ra
 		addiu	$sp, $sp, -4		# allocate stack frame
 		sw	$ra, 0($sp)		# done saving registers
-		
+
 		##
 		## Implement eliminate here
 		li $s0, 0 # 0 = k = 0
 k_loop: 
 		addi $s1, $s0, 1 # s1 = j = k + 1
-		
+
 		#get address for A[k]
 		sll $t0, $a1, 2
 		multu $s0, $t0
-		mflo $t0 # t0 has address for A[k]
-		addu $t0, $t0, $a0
-		
+		mflo $t0
+		addu $t0, $t0, $a0 # t0 has address for A[k]
+
 		#get A[k][k]
 		sll $t1, $s0, 2
 		addu $t1, $t1, $t0 # address of A[k][k] on t1
 		lwc1 $f10, 0($t1) # f10 cointains value of A[k][k]
+
+		# store 1.0 in $f21
+    		lui $t7, 0x3F80 # 1.0
+    		mtc1 $t7, $f6
+
+		div.s $f20, $f6, $f10 # f20 has inverse of A[k][k]
 		
-		# get A[k][k]
-		#move $a2, $s0 # prep argument k
-		#move $a3, $s0 # prep argument k
-		#jal getelem
-		#nop
-		#mov.s $f5, $f0 # A[k][k] value is stored in f5
-		#move $s7, $v0 # A[k][k] address is store in s7
-j_loop:		
-		#move $a3, $s1 # prep argument j
-		#jal getelem # returns address in v0, value in f0
-		#nop
-				
-		#mov.s $f2, $f0 # save value of A[k][j]
-		#move $t3, $v0 # move address from v0 to t3
-		
-		sll $t2, $s1, 2
-		addu $t2, $t2, $t0 #address of A[k][j] on t2
+j_loop: 	sub 
+
+		sll $t2, $s1, 2 # does this 4 times
+		addu $t2, $t2, $t0 # address of A[k][j] on t2
 		lwc1 $f11, 0($t2) # f11 cointains value of A[k][j]
-		
-		# move values to f registers, i.e. t2, t4
-		div.s $f4, $f11, $f10 # low = A[k][j] / A[k][k]
+
+		mul.s $f4, $f20, $f11
 		s.s $f4, 0($t2) # store new value in $t2
 		
 		addi $s1, $s1, 1 # incremement j
 		nop
+
 		blt $s1, $a1, j_loop # end of j_loop
 		nop
    		
    		# store 1.0 in A[k][k]
-    		lui $t7, 0x3F80           # 1.0
-    		mtc1 $t7, $f6
-    		s.s $f6, 0($t1)           # Value of A[k][k] set to 1.0
+    		s.s $f6, 0($t1) # Value of A[k][k] set to 1.0
 		
 		addi $s2, $s0, 1 # prep i = k + 1
 		
 i_loop:		addi $s5, $s0, 1 # inner j = k + 1 what is this
 		
-		# get A[i][k]
-		move $a2, $s2
-		move $a3, $s0
-		jal getelem
-		nop
+		# get A[i]
+		sll $t3, $a1, 2
+		multu $s2, $t3
+		mflo $t3
+		addu $t3, $t3, $a0 # t3 has address for A[i]
 		
-		move $t5, $v0 # move address from v0 to t5
-		mov.s $f7, $f0 # value of A[i][k] into f7
+		#get A[i][k]
+		sll $t4, $s0, 2
+		addu $t4, $t4, $t3 # address of A[i][k] on t4
+		lwc1 $f7, 0($t4) # f7 cointains value of A[i][k]
 		
-inner_i_loop: 	move $a2, $s2 # prep arguments for getelem A[i][j]
-		move $a3, $s5
-		jal getelem
-		nop
+inner_i_loop: 	#get A[i][j]
+		sll $t5, $s5, 2
+		addu $t5, $t5, $t3 # address of A[i][j] on t4
+		lwc1 $f2, 0($t5) # f7 cointains value of A[i][j]
 		
-		move $t0, $v0 # move address from v0 to t0
-		mov.s $f2, $f0 # save value of A[i][j] to f2
-		
-		# prep arguments for getelem A[k][j] to f4 # can be optimized
-		move $a2, $s0
-		move $a3, $s5
-		jal getelem
-		nop
-		
-		mov.s $f4, $f0 # save value of A[k][j] to f4
+		#get A[k][j]
+		sll $t6, $s5, 2
+		addu $t6, $t6, $t0 # address of A[k][j] on t6
+		lwc1 $f4, 0($t6) # f4 cointains value of A[k][j]
 		
 		mul.s $f3, $f7, $f4
 		sub.s $f2, $f2, $f3
-		s.s $f2, 0($t0)
+		s.s $f2, 0($t5)
 		
 		addi $s5, $s5, 1
 		nop
 		
 		blt $s5, $a1, inner_i_loop # end of inner 
 		nop
-		
-		sw $zero, 0($t5) # store 0.0
+		sw $zero, 0($t4) # store 0.0
 		
 		addi $s2, $s2, 1
 		nop
 
 		blt $s2, $a1, i_loop # end of i_loop
 		nop
-		nop
 		
 		addi $s0, $s0, 1 # increment k
 		nop
 		blt $s0, $a1, k_loop # end of k_loop
-		nop
 		nop
 		## 
 		
