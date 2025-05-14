@@ -1,15 +1,15 @@
 ### Text segment
 		.text
 start:
-		la	$a0, matrix_24x24		# a0 = A (base address of matrix)
-		li	$a1, 24	   		        # a1 = N (number of elements per row)
+		la	$a0, matrix_4x4 		# a0 = A (base address of matrix)
+		li	$a1, 4   		        # a1 = N (number of elements per row)
 									# <debug>
 		#jal 	print_matrix	    # print matrix before elimination
 		#nop							# </debug>
 		jal 	eliminate			# triangularize matrix!
 		nop							# <debug>
-		#jal 	print_matrix		# print matrix after elimination
-		#nop							# </debug>
+		jal 	print_matrix		# print matrix after elimination
+		nop							# </debug>
 		jal 	exit
 
 exit:
@@ -50,9 +50,11 @@ k_loop:
 
 		div.s $f20, $f6, $f10 # f20 has inverse of A[k][k]
 		
+		
+		
 j_loop: 	sub $t8, $a1, $s1 # t8 = N - j
 		addi $s6, $zero, 5
-		ble $t8, $s6, one_iteration # if j+3 < N: unroll
+		#ble $t8, $s6, one_iteration # if j+3 < N: unroll
 
 		# to do one iteration
 		sll $t2, $s1, 2 # does this 4 times
@@ -137,63 +139,81 @@ i_loop:		addi $s5, $s0, 1 # inner j = k + 1 what is this
 		#get A[i][k]
 		sll $t4, $s0, 2
 		addu $t4, $t4, $t3 # address of A[i][k] on t4
-		lwc1 $f7, 0($t4) # f7 cointains value of A[i][k]
+		lwc1 $f29, 0($t4) # f7 cointains value of A[i][k]
 		
-inner_i_loop: 	sub $t8, $a1, $s5 # t8 = N - j
-		addi $s6, $zero, 2
-		ble $t8, $s6, one_i_iter # if j+3 < N: unroll
+		#sll $t9, $a1, 2           # 4*N
+		#multu $s2, $t9
+		#mflo $t3                  # t3 = i*N*4
+		#sll $t4, $s0, 2           # k*4
+		#addu $t3, $t3, $t4
+		#addu $t4, $a0, $t3        # t4 = A[i][k]
+		#lwc1 $f30, 0($t4)         # f30 = A[i][k]
 		
+		
+		#A[k][j]
+		sll $t6, $s5, 2
+		addu $t6, $t6, $t0 # address of A[j][j] on t4
+		#lwc1 $f8, 0($t4) # f7 cointains value of A[i][k]
+		
+		#A[i][j]
 		sll $t5, $s5, 2
 		addu $t5, $t5, $t3 # address of A[i][j] on t4
-		lwc1 $f2, ($t5) # f7 cointains value of A[i][j]
+		#lwc1 $f9, 0($t5) # f7 cointains value of A[i][k]
 		
-		#get A[k][j]
-		sll $t6, $s5, 2
-		addu $t6, $t6, $t0 # address of A[k][j] on t6
-		lwc1 $f4, 0($t6) # f4 cointains value of A[k][j]
+		sub  $t8, $a1, $s5     # t8 = n - j
+		li   $s6, 2
+		ble  $t8, $s6, bka 
 		
-		mul.s $f3, $f7, $f4
-		sub.s $f2, $f2, $f3
-		s.s $f2, 0($t5)
+inner_i_loop: 	
+		lwc1 $f7, 0($t6) #A[k][j]A[k][j +1]...
+		lwc1 $f8, 4($t6)
+		#lwc1 $f9, 8($t6)
+		#lwc1 $f22, 12($t6)
 		
-		addi $s5, $s5, 1
-		nop
+		lwc1 $f12, 0($t5) #A[i][j]A[i][j +1]...
+		lwc1 $f13, 4($t5)
+		#lwc1 $f14, 8($t5)
+		#lwc1 $f15, 12($t5)
 		
-		sll $t5, $s5, 2
-		addu $t5, $t5, $t3 # address of A[i][j] on t4
-		lwc1 $f2, ($t5) # f7 cointains value of A[i][j]
+		mul.s $f23, $f7, $f29
+		mul.s $f24, $f8, $f29
+		#mul.s $f25, $f9, $f30
+		#mul.s $f26, $f22, $f30
+
+		sub.s $f12, $f12, $f29
+		sub.s $f13, $f13, $f29
+		#sub.s $f14, $f14, $f25
+		#sub.s $f15, $f15, $f26
+
 		
-		#get A[k][j]
-		sll $t6, $s5, 2
-		addu $t6, $t6, $t0 # address of A[k][j] on t6
-		lwc1 $f4, 0($t6) # f4 cointains value of A[k][j]
+		s.s $f12, 0($t5)
+		s.s $f13, 4($t5)
+		#s.s $f14, 8($t5)
+		#s.s $f15, 12($t5)
 		
-		mul.s $f3, $f7, $f4
-		sub.s $f2, $f2, $f3
-		s.s $f2, 0($t5)
 		
-		addi $s5, $s5, 1
-		nop
+		addi $s5, $s5, 2
+		addi $t5, $t5, 8
+		addi $t6, $t6, 8
 		
-		#get A[i][j]
-one_i_iter:	sll $t5, $s5, 2
-		addu $t5, $t5, $t3 # address of A[i][j] on t4
-		lwc1 $f2, 0($t5) # f7 cointains value of A[i][j]
+	
+		sub  $t8, $a1, $s5     # t8 = n - j
+		li   $s6, 2
+		bgt   $t8, $s6, inner_i_loop    # om färre än 4 element kvar → gå till tail-loop
+
+bka:
+    		lwc1 $f7, 0($t6)         # A[k][j]
+    		lwc1 $f12, 0($t5)        # A[i][j]
+   		mul.s $f7, $f7, $f29
+    		sub.s $f12, $f12, $f7
+    		s.s $f12, 0($t5)
+
+    		addi $s5, $s5, 1
+    		addi $t5, $t5, 4
+    		addi $t6, $t6, 4
+    		blt $s5, $a1, bka
 		
-		#get A[k][j]
-		sll $t6, $s5, 2
-		addu $t6, $t6, $t0 # address of A[k][j] on t6
-		lwc1 $f4, 0($t6) # f4 cointains value of A[k][j]
-		
-		mul.s $f3, $f7, $f4
-		sub.s $f2, $f2, $f3
-		s.s $f2, 0($t5)
-		
-		addi $s5, $s5, 1
-		nop
-		
-		blt $s5, $a1, inner_i_loop # end of inner 
-		nop
+	
 		sw $zero, 0($t4) # store 0.0
 		
 		addi $s2, $s2, 1
@@ -959,5 +979,13 @@ matrix_24x24:
 		.float	 65.00 
 		.float	 24.00 
 		.float	 24.00 
+		
+matrix_6x6:	.float 6.0, 4.0, 9.0, 3.0, 8.0, 5.0
+  		.float 2.0, 8.0, 7.0, 6.0, 4.0, 9.0
+    		.float 5.0, 3.0, 6.0, 2.0, 7.0, 8.0
+    		.float 7.0, 9.0, 2.0, 4.0, 5.0, 6.0
+    		.float 3.0, 2.0, 8.0, 9.0, 6.0, 7.0
+    		.float 4.0, 5.0, 3.0, 8.0, 2.0, 6.0
+
 
 ### End of data segment
