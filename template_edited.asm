@@ -50,63 +50,45 @@ k_loop:
 
 		div.s $f20, $f6, $f10 # f20 has inverse of A[k][k]
 		
-j_loop: 	sub $t8, $a1, $s1 # t8 = N - j
-		addi $s4, $zero, 5
-		blt $t8, $s4, one_iteration # if j+3 < N: unroll
-
 		# to do one iteration
 		sll $t2, $s1, 2 # does this 4 times
 		addu $t2, $t2, $t0 # address of A[k][j] on t2
 		lwc1 $f11, 0($t2) # f11 cointains value of A[k][j]
+		
+j_loop: 		sub $t8, $a1, $s1 # t8 = N - j
+		addi $s4, $zero, 3
+		blt $t8, $s4, one_iteration # if j+3 < N: unroll
 
-		mul.s $f4, $f20, $f11
-		s.s $f4, 0($t2) # store new value in $t2
-		
-		addi $s1, $s1, 1 # incremement j
-		#nop
-		
-		sll $t2, $s1, 2 # does this 4 times
-		addu $t2, $t2, $t0 # address of A[k][j] on t2
-		lwc1 $f11, 0($t2) # f11 cointains value of A[k][j]
 
+		lwc1 $f11, 0($t2) 
+		lwc1 $f12, 4($t2) 
+		#lwc1 $f13, 8($t2) 
+		
 		mul.s $f4, $f20, $f11
+		mul.s $f5, $f20, $f12
+		#mul.s $f6, $f20, $f13
+		
 		s.s $f4, 0($t2) # store new value in $t2
+		s.s $f5, 4($t2)
+		#s.s $f6, 4($t2)
 		
-		addi $s1, $s1, 1 # incremement j
-		#nop
 		
-		sll $t2, $s1, 2 # does this 4 times
-		addu $t2, $t2, $t0 # address of A[k][j] on t2
-		lwc1 $f11, 0($t2) # f11 cointains value of A[k][j]
-
-		mul.s $f4, $f20, $f11
-		s.s $f4, 0($t2) # store new value in $t2
-		
-		addi $s1, $s1, 1 # incremement j
-		#nop
-		
-		sll $t2, $s1, 2 # does this 4 times
-		addu $t2, $t2, $t0 # address of A[k][j] on t2
-		lwc1 $f11, 0($t2) # f11 cointains value of A[k][j]
-
-		mul.s $f4, $f20, $f11
-		s.s $f4, 0($t2) # store new value in $t2
-		
-		addi $s1, $s1, 1 # incremement j
-		#nop
+		addi $t2, $t2, 8
+		addi $s1, $s1, 3
 		
 		bgt   $t8, $s4, j_loop
 		
 		
-one_iteration:  sll $t2, $s1, 2 # does this 4 times
-		addu $t2, $t2, $t0 # address of A[k][j] on t2
-		lwc1 $f11, 0($t2) # f11 cointains value of A[k][j]
-
-		mul.s $f4, $f20, $f11
-		s.s $f4, 0($t2) # store new value in $t2
-		
-		addi $s1, $s1, 1 # incremement j
+one_iteration: 	lwc1 $f11, 0($t2) 
 		nop
+		mul.s $f4, $f20, $f11
+		nop
+		s.s $f4, 0($t2) # store new value in $t2
+
+		
+		
+		addi $t2, $t2, 4
+		addi $s1, $s1, 1
 		
 		# end of unroll
 
@@ -127,13 +109,13 @@ i_loop:		addi $s3, $s0, 1 # inner j = k + 1 what is this
 		addu $t3, $t3, $a0 # t3 has address for A[i]
 		
 		#get A[i][k]
-		sll $t6, $s0, 2
-		addu $t6, $t6, $t3 # address of A[i][k] on t4
-		lwc1 $f14, 0($t6) # f7 cointains value of A[i][k]
+		sll $t4, $s0, 2
+		addu $t4, $t4, $t3 # address of A[i][k] on t4
+		lwc1 $f29, 0($t4) # f7 cointains value of A[i][k]
 		
 		#A[k][j]
-		sll $t4, $s3, 2
-		addu $t4, $t4, $t0 # address of A[j][j] on t4
+		sll $t6, $s3, 2
+		addu $t6, $t6, $t0 # address of A[j][j] on t4
 		#lwc1 $f8, 0($t4) # f7 cointains value of A[i][k]
 		
 		#A[i][j]
@@ -145,8 +127,8 @@ i_loop:		addi $s3, $s0, 1 # inner j = k + 1 what is this
 		li   $s4, 3
 		ble  $t8, $s4, bka 
 		
-inner_i_loop:   lwc1 $f7, 0($t4) #A[k][j]A[k][j +1]...
-        	lwc1 $f8, 4($t4)
+inner_i_loop:   lwc1 $f7, 0($t6) #A[k][j]A[k][j +1]...
+        	lwc1 $f8, 4($t6)
         	#lwc1 $f9, 8($t6)
         	#lwc1 $f22, 0xc($t6)
 
@@ -155,42 +137,42 @@ inner_i_loop:   lwc1 $f7, 0($t4) #A[k][j]A[k][j +1]...
         	#lwc1 $f14, 8($t5)
         	#lwc1 $f15, 0xc($t5)
 
-        	mul.s $f7, $f7, $f14
-        	mul.s $f8, $f8, $f14
+        	mul.s $f23, $f7, $f29
+        	mul.s $f24, $f8, $f29
         	#mul.s $f25, $f9, $f29
         	#mul.s $f26, $f22, $f29
 
-        	sub.s $f12, $f12, $f7
-        	sub.s $f13, $f13, $f8
+        	sub.s $f14, $f12, $f23
+        	sub.s $f15, $f13, $f24
         	#sub.s $f14, $f14, $f25
         	#sub.s $f15, $f15, $f26
 
 
-        	s.s $f12, 0($t5)
-        	s.s $f13, 4($t5)
+        	s.s $f14, 0($t5)
+        	s.s $f15, 4($t5)
         	#s.s $f14, 8($t5)
         	#s.s $f15, 0xc($t5)
         	
         	addi $s3, $s3, 2
-        	addi $t4, $t4, 8
+        	addi $t6, $t6, 8
 	
 		sub  $t8, $a1, $s3     # t8 = n - j
 		li   $s4, 3
 		bgt   $t8, $s4, inner_i_loop
 		addi $t5, $t5, 8
 
-bka:		lwc1 $f7, 0($t4)         # A[k][j]
+bka:		lwc1 $f7, 0($t6)         # A[k][j]
     		lwc1 $f12, 0($t5)        # A[i][j]
-   		mul.s $f7, $f7, $f14
-    		sub.s $f12, $f12, $f7
-    		s.s $f12, 0($t5)
+   		mul.s $f8, $f7, $f29
+    		sub.s $f13, $f12, $f8
+    		s.s $f13, 0($t5)
 
     		addi $s3, $s3, 1
-    		addi $t4, $t4, 4
+    		addi $t6, $t6, 4
     		blt $s3, $a1, bka
     		addi $t5, $t5, 4
 	
-		sw $zero, 0($t6) # store 0.0
+		sw $zero, 0($t4) # store 0.0
 		
 		addi $s2, $s2, 1
 		nop
