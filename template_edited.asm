@@ -149,17 +149,17 @@ inner_i_loop:
                 lwc1 $f7, 0($t6) #A[k][j]A[k][j +1]...
         	lwc1 $f8, 4($t6)
         	#lwc1 $f9, 8($t6)
-        	#lwc1 $f22, 12($t6)
+        	#lwc1 $f22, 0xc($t6)
 
         	lwc1 $f12, 0($t5) #A[i][j]A[i][j +1]...
         	lwc1 $f13, 4($t5)
         	#lwc1 $f14, 8($t5)
-        	#lwc1 $f15, 12($t5)
+        	#lwc1 $f15, 0xc($t5)
 
         	mul.s $f23, $f7, $f29
         	mul.s $f24, $f8, $f29
-        	#mul.s $f25, $f9, $f30
-        	#mul.s $f26, $f22, $f30
+        	#mul.s $f25, $f9, $f29
+        	#mul.s $f26, $f22, $f29
 
         	sub.s $f12, $f12, $f23
         	sub.s $f13, $f13, $f24
@@ -170,7 +170,7 @@ inner_i_loop:
         	s.s $f12, 0($t5)
         	s.s $f13, 4($t5)
         	#s.s $f14, 8($t5)
-        	#s.s $f15, 12($t5)
+        	#s.s $f15, 0xc($t5)
         	
         	addi $s5, $s5, 2
         	addi $t5, $t5, 8
@@ -304,6 +304,12 @@ loop_s0:
 
 ### End of text segment
 
+## Good configurations
+# I-Cache: set size=1, n blocks=8, cache block size=8
+# D-Cache: set size=2, n blocks=16, cache block size=8
+# Memory: 30, 6, 12
+
+
 ### Data segment 
 		.data
 ### String constants
@@ -314,6 +320,7 @@ newline:
 
 ## Input matrix: (4x4) ##
 matrix_4x4:	
+		.align 4
 		.float 57.0
 		.float 20.0
 		.float 34.0
