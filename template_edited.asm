@@ -30,162 +30,91 @@ eliminate:
 		##
 		## Implement eliminate here
 		li $s0, 0 # 0 = k = 0
+		
 k_loop: 
 		addi $s1, $s0, 1 # s1 = j = k + 1
 
 		#get address for A[k]
 		sll $t0, $a1, 2
+		sll $t1, $s0, 2
+		
 		multu $s0, $t0
 		mflo $t0
 		addu $t0, $t0, $a0 # t0 has address for A[k]
 
 		#get A[k][k]
-		sll $t1, $s0, 2
+		lui $t7, 0x3F80 # 1.0
 		addu $t1, $t1, $t0 # address of A[k][k] on t1
+		mtc1 $t7, $f6
 		lwc1 $f10, 0($t1) # f10 cointains value of A[k][k]
 
 		# store 1.0 in $f21
-    		lui $t7, 0x3F80 # 1.0
-    		mtc1 $t7, $f6
-
-		div.s $f20, $f6, $f10 # f20 has inverse of A[k][k]
-		
-		# to do one iteration
+    		#mtc1 $t7, $f6
+    		
+    		div.s $f13, $f6, $f10 # f20 has inverse of A[k][k]
+    		
+    		# prep for unroll shit
 		sll $t2, $s1, 2 # does this 4 times
+		#div.s $f13, $f6, $f10 # f20 has inverse of A[k][k]
 		addu $t2, $t2, $t0 # address of A[k][j] on t2
+		
+one_iteration:
 		lwc1 $f11, 0($t2) # f11 cointains value of A[k][j]
-		
-j_loop: 		sub $t8, $a1, $s1 # t8 = N - j
-		addi $s4, $zero, 3
-		blt $t8, $s4, one_iteration # if j+3 < N: unroll
-
-
-		lwc1 $f11, 0($t2) 
-		lwc1 $f12, 4($t2) 
-		#lwc1 $f13, 8($t2) 
-		
-		mul.s $f4, $f20, $f11
-		mul.s $f5, $f20, $f12
-		#mul.s $f6, $f20, $f13
-		
-		s.s $f4, 0($t2) # store new value in $t2
-		s.s $f5, 4($t2)
-		#s.s $f6, 4($t2)
-		
-		
-		addi $t2, $t2, 8
-		addi $s1, $s1, 3
-		
-		bgt   $t8, $s4, j_loop
-		
-		
-one_iteration: 	lwc1 $f11, 0($t2) 
-		nop
-		mul.s $f4, $f20, $f11
-		nop
-		s.s $f4, 0($t2) # store new value in $t2
-
-		
-		
-		addi $t2, $t2, 4
+		mul.s $f4, $f13, $f11
 		addi $s1, $s1, 1
-		
-		# end of unroll
+		s.s $f4, 0($t2) # store new value in $t2
 
 		blt $s1, $a1, one_iteration # end of j_loop
-		nop
-   		
+		addi $t2, $t2, 4
    		# store 1.0 in A[k][k]
     		s.s $f6, 0($t1) # Value of A[k][k] set to 1.0
 		
 		addi $s2, $s0, 1 # prep i = k + 1
-		
-i_loop:		addi $s3, $s0, 1 # inner j = k + 1 what is this
-		
-		# get A[i]
 		sll $t3, $a1, 2
+		sll $t9, $s0, 2
+		
+i_loop:		addi $s5, $s0, 1 # inner j = k + 1 what is this
+		sll $t6, $s5, 2
+		move $t5, $t6
+		#sll $t5, $s5, 2
+		
 		multu $s2, $t3
-		mflo $t3
-		addu $t3, $t3, $a0 # t3 has address for A[i]
+		addu $t6, $t6, $t0 # address of A[j][j] on t4
+		mflo $s7
+		addu $s7, $s7, $a0 # t3 has address for A[i]
+		addu $t5, $t5, $s7 # address of A[i][j] on t4
 		
 		#get A[i][k]
-		sll $t4, $s0, 2
-		addu $t4, $t4, $t3 # address of A[i][k] on t4
+		addu $t4, $t9, $s7 # address of A[i][k] on t4
+		
+		#sub $t8, $a1, $s5
+		#li $s4, 3
+		#ble $t8, $s4, bka
 		lwc1 $f29, 0($t4) # f7 cointains value of A[i][k]
 		
-		#A[k][j]
-		sll $t6, $s3, 2
-		addu $t6, $t6, $t0 # address of A[j][j] on t4
-		#lwc1 $f8, 0($t4) # f7 cointains value of A[i][k]
-		
-		#A[i][j]
-		sll $t5, $s3, 2
-		addu $t5, $t5, $t3 # address of A[i][j] on t4
-		#lwc1 $f9, 0($t5) # f7 cointains value of A[i][k]
-		
-		sub  $t8, $a1, $s3     # t8 = n - j
-		li   $s4, 3
-		ble  $t8, $s4, bka 
-		
-inner_i_loop:   lwc1 $f7, 0($t6) #A[k][j]A[k][j +1]...
-        	lwc1 $f8, 4($t6)
-        	#lwc1 $f9, 8($t6)
-        	#lwc1 $f22, 0xc($t6)
-
-		lwc1 $f12, 0($t5) #A[i][j]A[i][j +1]...
-        	lwc1 $f13, 4($t5)
-        	#lwc1 $f14, 8($t5)
-        	#lwc1 $f15, 0xc($t5)
-
-        	mul.s $f23, $f7, $f29
-        	mul.s $f24, $f8, $f29
-        	#mul.s $f25, $f9, $f29
-        	#mul.s $f26, $f22, $f29
-
-        	sub.s $f14, $f12, $f23
-        	sub.s $f15, $f13, $f24
-        	#sub.s $f14, $f14, $f25
-        	#sub.s $f15, $f15, $f26
-
-
-        	s.s $f14, 0($t5)
-        	s.s $f15, 4($t5)
-        	#s.s $f14, 8($t5)
-        	#s.s $f15, 0xc($t5)
-        	
-        	addi $s3, $s3, 2
-        	addi $t6, $t6, 8
-	
-		sub  $t8, $a1, $s3     # t8 = n - j
-		li   $s4, 3
-		bgt   $t8, $s4, inner_i_loop
-		addi $t5, $t5, 8
-
 bka:		lwc1 $f7, 0($t6)         # A[k][j]
     		lwc1 $f12, 0($t5)        # A[i][j]
-   		mul.s $f8, $f7, $f29
-    		sub.s $f13, $f12, $f8
-    		s.s $f13, 0($t5)
+   		mul.s $f7, $f7, $f29
+    		sub.s $f12, $f12, $f7
+    		s.s $f12, 0($t5)
 
-    		addi $s3, $s3, 1
-    		addi $t6, $t6, 4
-    		blt $s3, $a1, bka
+    		addi $s5, $s5, 1
     		addi $t5, $t5, 4
+    		blt $s5, $a1, bka
+		addi $t6, $t6, 4
 	
-		sw $zero, 0($t4) # store 0.0
+		#sw $zero, 0($t4) # store 0.0
 		
 		addi $s2, $s2, 1
 		nop
 
 		blt $s2, $a1, i_loop # end of i_loop
-		nop
+		sw $zero, 0($t4) # store 0.0
 		
 		addi $s0, $s0, 1 # increment k
 		nop
 		blt $s0, $a1, k_loop # end of k_loop
 		nop
-		## 
-		
 		
 		lw	$ra, 0($sp)			# done restoring registers
 		addiu	$sp, $sp, 4			# remove stack frame
@@ -283,12 +212,6 @@ loop_s0:
 
 ### End of text segment
 
-## Good configurations
-# I-Cache: set size=1, n blocks=8, cache block size=8
-# D-Cache: set size=2, n blocks=16, cache block size=8
-# Memory: 30, 6, 12
-
-
 ### Data segment 
 		.data
 ### String constants
@@ -299,7 +222,6 @@ newline:
 
 ## Input matrix: (4x4) ##
 matrix_4x4:	
-		.align 4
 		.float 57.0
 		.float 20.0
 		.float 34.0
