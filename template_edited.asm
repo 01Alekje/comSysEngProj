@@ -8,8 +8,8 @@ start:
 		#nop							# </debug>
 		jal 	eliminate			# triangularize matrix!
 		nop							# <debug>
-		#jal 	print_matrix		# print matrix after elimination
-		#nop							# </debug>
+		jal 	print_matrix		# print matrix after elimination
+		nop							# </debug>
 		jal 	exit
 
 exit:
@@ -74,34 +74,41 @@ one_iteration:
 		sll $t9, $s0, 2
 		
 i_loop:		addi $s5, $s0, 1 # inner j = k + 1 what is this
+		multu $s2, $t3
 		sll $t6, $s5, 2
+		mflo $s7
 		move $t5, $t6
 		#sll $t5, $s5, 2
 		
-		multu $s2, $t3
-		addu $t6, $t6, $t0 # address of A[j][j] on t4
-		mflo $s7
+		#multu $s2, $t3
 		addu $s7, $s7, $a0 # t3 has address for A[i]
+		addu $t6, $t6, $t0 # address of A[j][j] on t4
 		addu $t5, $t5, $s7 # address of A[i][j] on t4
 		
 		#get A[i][k]
 		addu $t4, $t9, $s7 # address of A[i][k] on t4
 		
+		lwc1 $f7, 0($t6)         # A[k][j]
 		#sub $t8, $a1, $s5
 		#li $s4, 3
 		#ble $t8, $s4, bka
+		
 		lwc1 $f29, 0($t4) # f7 cointains value of A[i][k]
 		
-bka:		lwc1 $f7, 0($t6)         # A[k][j]
+bka:		
     		lwc1 $f12, 0($t5)        # A[i][j]
    		mul.s $f7, $f7, $f29
+   		addi $s5, $s5, 1
     		sub.s $f12, $f12, $f7
+    		addi $t6, $t6, 4
     		s.s $f12, 0($t5)
 
-    		addi $s5, $s5, 1
+    		#addi $s5, $s5, 1
+    		#addi $t5, $t5, 4
     		addi $t5, $t5, 4
     		blt $s5, $a1, bka
-		addi $t6, $t6, 4
+    		lwc1 $f7, 0($t6)         # A[k][j]
+		#addi $t6, $t6, 4
 	
 		#sw $zero, 0($t4) # store 0.0
 		
