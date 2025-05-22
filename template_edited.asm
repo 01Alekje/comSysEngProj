@@ -8,8 +8,8 @@ start:
 		#nop							# </debug>
 		jal 	eliminate			# triangularize matrix!
 		nop							# <debug>
-		#jal 	print_matrix		# print matrix after elimination
-		#nop							# </debug>
+		jal 	print_matrix		# print matrix after elimination
+		nop							# </debug>
 		jal 	exit
 
 exit:
@@ -62,11 +62,11 @@ one_iteration:
 		mul.s $f4, $f13, $f11
 		addi $s1, $s1, 1
 		
-		s.s $f4, 0($t2) # store new value in $t2
+		swc1 $f4, 0($t2) # store new value in $t2
 		blt $s1, $a1, one_iteration # end of j_loop
 		addi $t2, $t2, 4
    		# store 1.0 in A[k][k]
-    		s.s $f6, 0($t1) # Value of A[k][k] set to 1.0
+    		swc1 $f6, 0($t1) # Value of A[k][k] set to 1.0
 		
 		addi $s2, $s0, 1 # prep i = k + 1
 		sll $t3, $a1, 2
@@ -99,7 +99,7 @@ bka2:	lwc1 $f7, 0($t6)         # A[k][j]
     		lwc1 $f12, 0($t5)        # A[i][j]
    		mul.s $f7, $f7, $f29
     		sub.s $f12, $f12, $f7
-    		s.s $f12, 0($t5)
+    		swc1 $f12, 0($t5)
 
     		lwc1 $f7, 4($t6)         # A[k][j]
     		lwc1 $f12, 4($t5)        # A[i][j]
@@ -107,7 +107,7 @@ bka2:	lwc1 $f7, 0($t6)         # A[k][j]
    		
     		sub.s $f12, $f12, $f7
     	
-    		s.s $f12, 4($t5)
+    		swc1 $f12, 4($t5)
     		
     		lwc1 $f7, 8($t6)         # A[k][j]
     		lwc1 $f12, 8($t5)        # A[i][j]
@@ -116,7 +116,7 @@ bka2:	lwc1 $f7, 0($t6)         # A[k][j]
    		
     		sub.s $f12, $f12, $f7
     	
-    		s.s $f12, 8($t5)
+    		swc1 $f12, 8($t5)
     		
     		sub $t8, $a1, $s5
     		addi $t5, $t5, 12
@@ -130,7 +130,7 @@ bka:		lwc1 $f7, 0($t6)
    		addi $s5, $s5, 1
     		sub.s $f12, $f12, $f7
     		addi $t6, $t6, 4
-    		s.s $f12, 0($t5)
+    		swc1 $f12, 0($t5)
 
     		#addi $s5, $s5, 1
     		#addi $t5, $t5, 4
