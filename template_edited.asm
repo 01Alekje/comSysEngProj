@@ -8,8 +8,8 @@ start:
 		#nop							# </debug>
 		jal 	eliminate			# triangularize matrix!
 		nop							# <debug>
-		jal 	print_matrix		# print matrix after elimination
-		nop							# </debug>
+		#jal 	print_matrix		# print matrix after elimination
+		#nop							# </debug>
 		jal 	exit
 
 exit:
@@ -31,8 +31,10 @@ eliminate:
 		## Implement eliminate here
 		li $s0, 0 # 0 = k = 0
 		
+		addi $s1, $s0, 1
+		
 k_loop: 
-		addi $s1, $s0, 1 # s1 = j = k + 1
+		 # s1 = j = k + 1
 
 		#get address for A[k]
 		sll $t0, $a1, 2
@@ -72,8 +74,9 @@ one_iteration:
 		addi $s2, $s0, 1 # prep i = k + 1
 		sll $t3, $a1, 2
 		sll $t9, $s0, 2
+		addi $s5, $s0, 1
 		
-i_loop:		addi $s5, $s0, 1 # inner j = k + 1 what is this
+i_loop:	 # inner j = k + 1 what is this
 		multu $s2, $t3
 		sll $t6, $s5, 2
 		mflo $s7
@@ -113,15 +116,15 @@ bka:
 		#sw $zero, 0($t4) # store 0.0
 		
 		addi $s2, $s2, 1
-		nop
+		addi $s5, $s0, 1
 
 		blt $s2, $a1, i_loop # end of i_loop
 		sw $zero, 0($t4) # store 0.0
 		
 		addi $s0, $s0, 1 # increment k
-		nop
+		
 		blt $s0, $a1, k_loop # end of k_loop
-		nop
+		addi $s1, $s0, 1
 		
 		lw	$ra, 0($sp)			# done restoring registers
 		addiu	$sp, $sp, 4			# remove stack frame
