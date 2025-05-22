@@ -32,6 +32,8 @@ eliminate:
 		li $s0, 0 # 0 = k = 0
 		
 		addi $s1, $s0, 1
+		lui $t7, 0x3F80 # 1.0
+		mtc1 $t7, $f6
 		
 k_loop: 
 		 # s1 = j = k + 1
@@ -45,27 +47,22 @@ k_loop:
 		addu $t0, $t0, $a0 # t0 has address for A[k]
 
 		#get A[k][k]
-		lui $t7, 0x3F80 # 1.0
 		addu $t1, $t1, $t0 # address of A[k][k] on t1
-		mtc1 $t7, $f6
 		lwc1 $f10, 0($t1) # f10 cointains value of A[k][k]
-
-		# store 1.0 in $f21
-    		#mtc1 $t7, $f6
     		
     		div.s $f13, $f6, $f10 # f20 has inverse of A[k][k]
     		
-    		# prep for unroll shit
-		sll $t2, $s1, 2 # does this 4 times
-		#div.s $f13, $f6, $f10 # f20 has inverse of A[k][k]
+    		
+		sll $t2, $s1, 2
+		
 		addu $t2, $t2, $t0 # address of A[k][j] on t2
 		
 one_iteration:
 		lwc1 $f11, 0($t2) # f11 cointains value of A[k][j]
 		mul.s $f4, $f13, $f11
 		addi $s1, $s1, 1
+		
 		s.s $f4, 0($t2) # store new value in $t2
-
 		blt $s1, $a1, one_iteration # end of j_loop
 		addi $t2, $t2, 4
    		# store 1.0 in A[k][k]
@@ -91,14 +88,43 @@ i_loop:	 # inner j = k + 1 what is this
 		#get A[i][k]
 		addu $t4, $t9, $s7 # address of A[i][k] on t4
 		
-		lwc1 $f7, 0($t6)         # A[k][j]
-		#sub $t8, $a1, $s5
-		#li $s4, 3
-		#ble $t8, $s4, bka
+		 # f7 cointains value of A[i][k]
 		
-		lwc1 $f29, 0($t4) # f7 cointains value of A[i][k]
-		
-bka:		
+		sub $t8, $a1, $s5
+		li $s4, 4
+		ble $t8, $s4, bka
+		lwc1 $f29, 0($t4)
+
+bka2:	lwc1 $f7, 0($t6)         # A[k][j]
+    		lwc1 $f12, 0($t5)        # A[i][j]
+   		mul.s $f7, $f7, $f29
+    		sub.s $f12, $f12, $f7
+    		s.s $f12, 0($t5)
+
+    		lwc1 $f7, 4($t6)         # A[k][j]
+    		lwc1 $f12, 4($t5)        # A[i][j]
+   		mul.s $f7, $f7, $f29
+   		
+    		sub.s $f12, $f12, $f7
+    	
+    		s.s $f12, 4($t5)
+    		
+    		lwc1 $f7, 8($t6)         # A[k][j]
+    		lwc1 $f12, 8($t5)        # A[i][j]
+   		mul.s $f7, $f7, $f29
+   		addi $s5, $s5, 3
+   		
+    		sub.s $f12, $f12, $f7
+    	
+    		s.s $f12, 8($t5)
+    		
+    		sub $t8, $a1, $s5
+    		addi $t5, $t5, 12
+    		bge $t8, $s4, bka2
+    		addi $t6, $t6, 12
+
+		         # A[k][j]
+bka:		lwc1 $f7, 0($t6)
     		lwc1 $f12, 0($t5)        # A[i][j]
    		mul.s $f7, $f7, $f29
    		addi $s5, $s5, 1
@@ -108,11 +134,12 @@ bka:
 
     		#addi $s5, $s5, 1
     		#addi $t5, $t5, 4
-    		addi $t5, $t5, 4
+    		
     		blt $s5, $a1, bka
-    		lwc1 $f7, 0($t6)         # A[k][j]
+    		addi $t5, $t5, 4
+    		#lwc1 $f7, 0($t6)         # A[k][j]
 		#addi $t6, $t6, 4
-	
+end_my_suffering:
 		#sw $zero, 0($t4) # store 0.0
 		
 		addi $s2, $s2, 1
